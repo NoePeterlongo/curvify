@@ -10,6 +10,7 @@ import numpy as np
 
 from pathlib import Path
 
+from data_holder import DataHolder
 from plot_widget import PlotWidget
 
 
@@ -17,12 +18,17 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.data_holder = DataHolder()
+
+        # QT
         self.setWindowTitle("Curve Fitter")
         self.setGeometry(100, 100, 800, 600)
 
-        self.plot_widget = PlotWidget(self)
+        self.plot_widget = PlotWidget(self, self.data_holder)
         self.range_selection_slider = QRangeSlider(Qt.Orientation.Horizontal)
         self.range_selection_slider.setValue((0, 100))
+        self.range_selection_slider.valueChanged.connect(self.data_holder.set_selected_range)
+        self.range_selection_slider.valueChanged.connect(self.plot_widget.update_plot)
 
         layout = QVBoxLayout()
         layout.addWidget(self.plot_widget)
@@ -54,8 +60,9 @@ class MainWindow(QMainWindow):
                     data = np.loadtxt(path, delimiter=',', skiprows=1)
                     x = data[:, 0]
                     y = data[:, 1]
+                    self.data_holder.set_data(x, y)
                     title = path.name
-                    self.plot_widget.update_data(x, y, title)
+                    self.plot_widget.update_plot()
 
 
 if __name__ == "__main__":

@@ -6,15 +6,18 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
 import matplotlib
 import os
-import numpy as np
+
+from data_holder import DataHolder
 
 os.environ['QT_API'] = 'pyside6'
 matplotlib.use('QtAgg')
 
 
 class PlotWidget(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, data_holder: DataHolder):
         super().__init__(parent)
+        self.data_holder = data_holder
+
         # Create a Matplotlib figure and axis
         self.figure, self.ax = plt.subplots()
         self.canvas = FigureCanvas(self.figure)
@@ -25,13 +28,12 @@ class PlotWidget(QWidget):
         self.setLayout(layout)
 
     @Slot()
-    def update_data(self, x: np.ndarray, y: np.ndarray, title: str):
+    def update_plot(self):
         # Clear the current plot
-        x_label = self.ax.get_xlabel()
         self.ax.clear()
         # Plot new data
-        self.ax.plot(x, y, '.')
-        self.ax.set_xlabel(x_label)
-        self.ax.set_title(title)
+        self.ax.plot(*self.data_holder.get_selected_data(), '.')
+        self.ax.plot(*self.data_holder.get_not_selected_data(), '+', color='lightgray')
+        # self.ax.set_title(title)
         # Redraw the canvas
         self.canvas.draw()
