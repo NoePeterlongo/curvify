@@ -9,6 +9,8 @@ class Param:
     name: str
     value: float = 1.0
     locked: bool = False
+    min_value: float = -float('inf')
+    max_value: float = float('inf')
 
 class Solver:
     def __init__(self):
@@ -53,7 +55,9 @@ class Solver:
     def fit(self, x_data: np.ndarray, y_data: np.ndarray) -> dict:
         # TODO: check the nb of points vs the number of parmaeters
         p0 = [param.value for param in self.params]
-        params, covariance = curve_fit(self.model, x_data, y_data, p0=p0)
+        upper_bounds = [p.value+1e-15 if p.locked else p.max_value for p in self.params]
+        lower_bounds = [p.value if p.locked else p.min_value for p in self.params]
+        params, covariance = curve_fit(self.model, x_data, y_data, p0=p0, bounds=(lower_bounds, upper_bounds))
         for i, param in enumerate(self.params):
             param.value = float(params[i])
 

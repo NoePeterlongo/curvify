@@ -1,15 +1,16 @@
 
 from PySide6 import QtGui
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, \
-    QWidget, QPushButton, QLineEdit, QGridLayout, QLabel
+    QWidget, QPushButton, QLineEdit, QGridLayout, QLabel, QCheckBox
 from PySide6.QtCore import Qt as Qt
 from qtrangeslider import QRangeSlider
 
 import sys
 import os
+from pathlib import Path
+from functools import partial
 import numpy as np
 
-from pathlib import Path
 
 from data_holder import DataHolder
 from plot_widget import PlotWidget
@@ -135,6 +136,7 @@ class MainWindow(QMainWindow):
 
         self.parameters_grid_layout.addWidget(QLabel("Param"), 0, 0)
         self.parameters_grid_layout.addWidget(QLabel("Value"), 0, 1)
+        self.parameters_grid_layout.addWidget(QLabel("Locked"), 0, 2)
 
         parameters = self.solver.get_params()
         for i, param in enumerate(parameters):
@@ -146,6 +148,13 @@ class MainWindow(QMainWindow):
             )
             self.parameters_grid_layout.addWidget(value_edit, i+1, 1)
 
+            lock_checkbox = QCheckBox()
+            lock_checkbox.setChecked(param.locked)
+            lock_checkbox.stateChanged.connect(
+                partial(self.param_locked_changed, param)
+            )
+            self.parameters_grid_layout.addWidget(lock_checkbox, i+1, 2)
+
     def param_value_edited(self, param: Param, value: str):
         try:
             val = float(value)
@@ -153,6 +162,9 @@ class MainWindow(QMainWindow):
             self.update_plot()
         except:
             pass
+    
+    def param_locked_changed(self, param: Param, state: int):
+        param.locked = state == Qt.Checked.value
 
 
 if __name__ == "__main__":
