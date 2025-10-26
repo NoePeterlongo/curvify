@@ -142,7 +142,7 @@ class MainWindow(QMainWindow):
             value_edit = QLineEdit(f"{param.value:.3g}")
             value_edit.setValidator(QtGui.QDoubleValidator())
             value_edit.textChanged.connect(
-                lambda value: self.param_value_edited(param, value)
+                partial(self.param_value_edited, param)
             )
             self.parameters_grid_layout.addWidget(value_edit, i+1, 1)
 
