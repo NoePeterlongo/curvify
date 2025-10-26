@@ -35,9 +35,9 @@ class DataHolder():
         # Create a boolean mask
         min_val, max_val = self.x.min(), self.x.max()
         lower_bound = min_val + self.selected_percent_min / \
-            100 * (max_val - min_val)
+            99 * (max_val - min_val)
         upper_bound = min_val + self.selected_percent_max / \
-            100 * (max_val - min_val)
+            99 * (max_val - min_val)
         self.selected_mask = (self.x >= lower_bound) & (self.x <= upper_bound)
 
     def update_curve(self):
