@@ -1,6 +1,7 @@
 
 from PySide6 import QtGui
-from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QTextEdit
+from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, \
+    QWidget, QPushButton, QLineEdit, QGridLayout, QLabel
 from PySide6.QtCore import Qt as Qt
 from qtrangeslider import QRangeSlider
 
@@ -35,14 +36,21 @@ class MainWindow(QMainWindow):
         self.range_selection_slider.valueChanged.connect(
             self.update_plot)
 
-        self.function_text_edit = QTextEdit()
+        self.function_text_edit = QLineEdit()
         self.function_text_edit.setPlaceholderText("Enter your function here")
-        self.function_text_edit.setText("a * x + np.sin(b + x) + c")
+        self.function_text_edit.setText("a * x**2 + b*x + c")
+        self.solver.update_model("a * x**2 + b*x + c")
         self.function_text_edit.textChanged.connect(self.update_function_text)
 
         self.fit_button = QPushButton("Fit")
         self.fit_button.clicked.connect(self.fit)
         self.fit_button.setEnabled(False)
+
+        self.parameters_grid_layout = QGridLayout()
+        self.parameters_grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        parameters_grid = QWidget()
+        parameters_grid.setLayout(self.parameters_grid_layout)
+        self.build_parameters_grid()
 
         main_layout = QHBoxLayout()
         right_layout = QVBoxLayout()
@@ -62,6 +70,7 @@ class MainWindow(QMainWindow):
         left_panel.setFixedWidth(300)
 
         left_layout.addWidget(self.function_text_edit)
+        left_layout.addWidget(parameters_grid)
         left_layout.addWidget(self.fit_button)
 
         right_layout.addWidget(self.plot_widget)
@@ -101,10 +110,11 @@ class MainWindow(QMainWindow):
             self.solver.is_valid() and len(self.data_holder) > 2)
 
     def update_function_text(self):
-        text = self.function_text_edit.toPlainText()
+        text = self.function_text_edit.text()
         self.solver.update_model(text)
         self.update_plot()
         self.check_ready_to_fit()
+        self.build_parameters_grid()
 
     def update_plot(self):
         self.data_holder.update_curve()
@@ -113,6 +123,29 @@ class MainWindow(QMainWindow):
     def fit(self):
         self.solver.fit(*self.data_holder.get_selected_data())
         self.update_plot()
+        self.build_parameters_grid()
+
+    def build_parameters_grid(self):
+        # Clear layout
+        while self.parameters_grid_layout.count():
+            item = self.parameters_grid_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+
+        self.parameters_grid_layout.addWidget(QLabel("Param"), 0, 0)
+        self.parameters_grid_layout.addWidget(QLabel("Init"), 0, 1)
+        self.parameters_grid_layout.addWidget(QLabel("Value"), 0, 2)
+
+        parameters = self.solver.get_params()
+        for i, param in enumerate(parameters):
+            self.parameters_grid_layout.addWidget(QLabel(param.name), i+1, 0)
+            initial_value_edit = QLineEdit(str(param.initial_value))
+            initial_value_edit.setFixedWidth(60)
+            self.parameters_grid_layout.addWidget(initial_value_edit, i+1, 1)
+            if param.value is not None:
+                value_edit = QLineEdit(f"{param.value:.3g}")
+                self.parameters_grid_layout.addWidget(value_edit, i+1, 2)
 
 
 if __name__ == "__main__":
