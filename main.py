@@ -40,6 +40,10 @@ class MainWindow(QMainWindow):
         self.function_text_edit.setText("a * x + np.sin(b + x) + c")
         self.function_text_edit.textChanged.connect(self.update_function_text)
 
+        self.fit_button = QPushButton("Fit")
+        self.fit_button.clicked.connect(self.fit)
+        self.fit_button.setEnabled(False)
+
         main_layout = QHBoxLayout()
         right_layout = QVBoxLayout()
         left_layout = QVBoxLayout()
@@ -58,6 +62,7 @@ class MainWindow(QMainWindow):
         left_panel.setFixedWidth(300)
 
         left_layout.addWidget(self.function_text_edit)
+        left_layout.addWidget(self.fit_button)
 
         right_layout.addWidget(self.plot_widget)
         right_layout.addWidget(self.range_selection_slider)
@@ -89,15 +94,25 @@ class MainWindow(QMainWindow):
                     self.data_holder.set_data(x, y)
                     title = path.name
                     self.update_plot()
+                    self.check_ready_to_fit()
+
+    def check_ready_to_fit(self):
+        self.fit_button.setEnabled(
+            self.solver.is_valid() and len(self.data_holder) > 2)
 
     def update_function_text(self):
         text = self.function_text_edit.toPlainText()
         self.solver.update_model(text)
         self.update_plot()
+        self.check_ready_to_fit()
 
     def update_plot(self):
         self.data_holder.update_curve()
         self.plot_widget.update_plot()
+
+    def fit(self):
+        self.solver.fit(*self.data_holder.get_selected_data())
+        self.update_plot()
 
 
 if __name__ == "__main__":

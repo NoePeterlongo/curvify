@@ -27,7 +27,6 @@ class Solver:
         try:
             model = eval(function_str)
         except:
-            print("Error in model definition")
             self.is_valid_ = False
             return
         self.model = model
@@ -49,11 +48,11 @@ class Solver:
 
     def evaluate(self, x: float) -> float:
         params_dict = self.get_params_dict()
-        return self.model(x, **params_dict)
-        # vectorized_model = np.vectorize(lambda xi: self.model(xi, **params_dict))
-        # return vectorized_model(x)
+        # return self.model(x, **params_dict)
+        vectorized_model = np.vectorize(lambda xi: self.model(xi, **params_dict))
+        return vectorized_model(x)
 
-    def solve(self, x_data: np.ndarray, y_data: np.ndarray) -> dict:
+    def fit(self, x_data: np.ndarray, y_data: np.ndarray) -> dict:
         # TODO: check the nb of points vs the number of parmaeters
         p0 = [param.initial_value for param in self.params]
         params, covariance = curve_fit(self.model, x_data, y_data, p0=p0)
@@ -70,7 +69,7 @@ if __name__ == "__main__":
     f = lambda x: 2*x + np.sin(1 + x) + 5 + np.random.rand()
     y_data = f(x_data)
 
-    solver.solve(x_data, y_data)
+    solver.fit(x_data, y_data)
     print(solver.get_params_dict())
     y_hat_data = solver.evaluate(x_data)
     print(y_hat_data - y_data)
