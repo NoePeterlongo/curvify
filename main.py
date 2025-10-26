@@ -13,7 +13,7 @@ from pathlib import Path
 
 from data_holder import DataHolder
 from plot_widget import PlotWidget
-from solver import Solver
+from solver import Param, Solver
 
 
 class MainWindow(QMainWindow):
@@ -117,7 +117,7 @@ class MainWindow(QMainWindow):
         self.build_parameters_grid()
 
     def update_plot(self):
-        self.data_holder.update_curve()
+        self.data_holder.update_curve()  # Data_holder holds the solver
         self.plot_widget.update_plot()
 
     def fit(self):
@@ -134,18 +134,25 @@ class MainWindow(QMainWindow):
                 widget.deleteLater()
 
         self.parameters_grid_layout.addWidget(QLabel("Param"), 0, 0)
-        self.parameters_grid_layout.addWidget(QLabel("Init"), 0, 1)
-        self.parameters_grid_layout.addWidget(QLabel("Value"), 0, 2)
+        self.parameters_grid_layout.addWidget(QLabel("Value"), 0, 1)
 
         parameters = self.solver.get_params()
         for i, param in enumerate(parameters):
             self.parameters_grid_layout.addWidget(QLabel(param.name), i+1, 0)
-            initial_value_edit = QLineEdit(str(param.initial_value))
-            initial_value_edit.setFixedWidth(60)
-            self.parameters_grid_layout.addWidget(initial_value_edit, i+1, 1)
-            if param.value is not None:
-                value_edit = QLineEdit(f"{param.value:.3g}")
-                self.parameters_grid_layout.addWidget(value_edit, i+1, 2)
+            value_edit = QLineEdit(f"{param.value:.3g}")
+            value_edit.setValidator(QtGui.QDoubleValidator())
+            value_edit.textChanged.connect(
+                lambda value: self.param_value_edited(param, value)
+            )
+            self.parameters_grid_layout.addWidget(value_edit, i+1, 1)
+
+    def param_value_edited(self, param: Param, value: str):
+        try:
+            val = float(value)
+            param.value = val
+            self.update_plot()
+        except:
+            pass
 
 
 if __name__ == "__main__":

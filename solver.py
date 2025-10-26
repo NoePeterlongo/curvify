@@ -7,10 +7,8 @@ from dataclasses import dataclass
 @dataclass
 class Param:
     name: str
-    initial_value: float = 1.0
-    value: float | None = None
+    value: float = 1.0
     locked: bool = False
-
 
 class Solver:
     def __init__(self):
@@ -43,7 +41,7 @@ class Solver:
 
     def get_params_dict(self):
         return {
-            param.name: param.value if param.value is not None else param.initial_value for param in self.params
+            param.name: param.value for param in self.params
         }
 
     def evaluate(self, x: float) -> float:
@@ -54,7 +52,7 @@ class Solver:
 
     def fit(self, x_data: np.ndarray, y_data: np.ndarray) -> dict:
         # TODO: check the nb of points vs the number of parmaeters
-        p0 = [param.initial_value for param in self.params]
+        p0 = [param.value for param in self.params]
         params, covariance = curve_fit(self.model, x_data, y_data, p0=p0)
         for i, param in enumerate(self.params):
             param.value = float(params[i])
