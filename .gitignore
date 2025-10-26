@@ -1,4 +1,6 @@
 __pycache__/*
+curvify/__pycache__/*
 *tset*
 *Tset*
 *.csv
+*egg-info/

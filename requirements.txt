@@ -1,0 +1,8 @@
+matplotlib==3.10.7
+numpy==2.3.4
+pandas==2.3.3
+pyside6==6.10.0
+pyside6_addons==6.10.0
+pyside6_essentials==6.10.0
+QtRangeSlider==0.1.5
+scipy==1.16.2

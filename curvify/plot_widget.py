@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import os
 
-from data_holder import DataHolder
+from .data_holder import DataHolder
 
 os.environ['QT_API'] = 'pyside6'
 matplotlib.use('QtAgg')

@@ -12,21 +12,28 @@ from functools import partial
 import numpy as np
 
 
-from data_holder import DataHolder
-from plot_widget import PlotWidget
-from solver import Param, Solver
+from .data_holder import DataHolder
+from .plot_widget import PlotWidget
+from .solver import Param, Solver
+
+import importlib.resources
+
+def get_icon():
+    with importlib.resources.path("curvify.icons", "app_icon.png") as icon_path:
+        return QtGui.QIcon(str(icon_path))
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, x_array: np.ndarray | None, y_array: np.ndarray | None, default_function: str | None):
         super().__init__()
 
         self.solver = Solver()
         self.data_holder = DataHolder(self.solver)
 
         # QT
-        self.setWindowTitle("Curve Fitter")
+        self.setWindowTitle("Curvify")
         self.setGeometry(100, 100, 900, 600)
+        self.setWindowIcon(get_icon())
 
         self.plot_widget = PlotWidget(self, self.data_holder)
         self.plot_widget.setMinimumSize(400, 400)
@@ -84,6 +91,12 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(main_widget)
 
+        # Initialize with data
+        if x_array is not None and y_array is not None:
+            self.set_data(x_array, y_array)
+        if default_function is not None:
+            self.function_text_edit.setText(default_function)
+
     def drag_enter_event(self, event: QtGui.QDragEnterEvent):
         if event.mimeData().hasUrls():
             n_files = len(event.mimeData().urls())
@@ -101,10 +114,12 @@ class MainWindow(QMainWindow):
                     data = np.loadtxt(path, delimiter=',', skiprows=1)
                     x = data[:, 0]
                     y = data[:, 1]
-                    self.data_holder.set_data(x, y)
-                    title = path.name
-                    self.update_plot()
-                    self.check_ready_to_fit()
+                    self.set_data(x, y)
+
+    def set_data(self, x: np.ndarray, y: np.ndarray):
+        self.data_holder.set_data(x, y)
+        self.update_plot()
+        self.check_ready_to_fit()
 
     def check_ready_to_fit(self):
         self.fit_button.setEnabled(
@@ -162,9 +177,20 @@ class MainWindow(QMainWindow):
             self.update_plot()
         except:
             pass
-    
+
     def param_locked_changed(self, param: Param, state: int):
         param.locked = state == Qt.Checked.value
+
+
+def curvify(
+    x_array: np.ndarray | None = None,
+    y_array: np.ndarray | None = None,
+    default_function: str | None = None
+):
+    app = QApplication(sys.argv)
+    window = MainWindow(x_array, y_array, default_function)
+    window.show()
+    return app.exec()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import numpy as np
 
-from solver import Solver
+from .solver import Solver
 
 
 class DataHolder():
