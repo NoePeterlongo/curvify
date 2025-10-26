@@ -47,7 +47,7 @@ class Solver:
             param.name: param.value if param.value is not None else param.initial_value for param in self.params
         }
 
-    def inference(self, x: float) -> float:
+    def evaluate(self, x: float) -> float:
         params_dict = self.get_params_dict()
         return self.model(x, **params_dict)
         # vectorized_model = np.vectorize(lambda xi: self.model(xi, **params_dict))
@@ -64,7 +64,7 @@ class Solver:
 if __name__ == "__main__":
     solver = Solver()
     solver.update_model("a * x + np.sin(b + x) + c")
-    print(solver.inference(1))
+    print(solver.evaluate(1))
 
     x_data = np.linspace(0, 10, 100)
     f = lambda x: 2*x + np.sin(1 + x) + 5 + np.random.rand()
@@ -72,5 +72,5 @@ if __name__ == "__main__":
 
     solver.solve(x_data, y_data)
     print(solver.get_params_dict())
-    y_hat_data = solver.inference(x_data)
+    y_hat_data = solver.evaluate(x_data)
     print(y_hat_data - y_data)

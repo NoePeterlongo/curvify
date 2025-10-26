@@ -34,6 +34,7 @@ class PlotWidget(QWidget):
         # Plot new data
         self.ax.plot(*self.data_holder.get_selected_data(), '.')
         self.ax.plot(*self.data_holder.get_not_selected_data(), '+', color='lightgray')
+        self.ax.plot(*self.data_holder.get_curve_data(), '--', color='red')
         # self.ax.set_title(title)
         # Redraw the canvas
         self.canvas.draw()
