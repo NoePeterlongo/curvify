@@ -11,12 +11,13 @@ from pathlib import Path
 from functools import partial
 import numpy as np
 
-
+from .csv_dialog import CSVDialog
 from .data_holder import DataHolder
 from .plot_widget import PlotWidget
 from .solver import Param, Solver
 
 import importlib.resources
+
 
 def get_icon():
     with importlib.resources.path("curvify.icons", "app_icon.png") as icon_path:
@@ -111,10 +112,9 @@ class MainWindow(QMainWindow):
             for url in mime.urls():
                 path = Path(url.toLocalFile())
                 if path.suffix == '.csv':
-                    data = np.loadtxt(path, delimiter=',', skiprows=1)
-                    x = data[:, 0]
-                    y = data[:, 1]
-                    self.set_data(x, y)
+                    csv_dialog = CSVDialog(path, self)
+                    csv_dialog.data_selected.connect(self.set_data)
+                    csv_dialog.exec()
 
     def set_data(self, x: np.ndarray, y: np.ndarray):
         self.data_holder.set_data(x, y)
