@@ -25,7 +25,11 @@ def get_icon():
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, x_array: np.ndarray | None, y_array: np.ndarray | None, default_function: str | None):
+    def __init__(self,
+                 x_array: np.ndarray | None,
+                 y_array: np.ndarray | None,
+                 default_function: str | None,
+                 csv_file: str | None):
         super().__init__()
 
         self.solver = Solver()
@@ -97,6 +101,8 @@ class MainWindow(QMainWindow):
             self.set_data(x_array, y_array)
         if default_function is not None:
             self.function_text_edit.setText(default_function)
+        if csv_file is not None:
+            self.load_csv(csv_file)
 
     def drag_enter_event(self, event: QtGui.QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -112,9 +118,13 @@ class MainWindow(QMainWindow):
             for url in mime.urls():
                 path = Path(url.toLocalFile())
                 if path.suffix == '.csv':
-                    csv_dialog = CSVDialog(path, self)
-                    csv_dialog.data_selected.connect(self.set_data)
-                    csv_dialog.exec()
+                    self.load_csv(path)
+    
+    def load_csv(self, path: str | Path):
+        csv_dialog = CSVDialog(path, self)
+        csv_dialog.data_selected.connect(self.set_data)
+        csv_dialog.exec()
+
 
     def set_data(self, x: np.ndarray, y: np.ndarray):
         self.data_holder.set_data(x, y)
@@ -183,12 +193,12 @@ class MainWindow(QMainWindow):
 
 
 def curvify(
-    x_array: np.ndarray | None = None,
-    y_array: np.ndarray | None = None,
-    default_function: str | None = None
-):
+        x_array: np.ndarray | None = None,
+        y_array: np.ndarray | None = None,
+        default_function: str | None = None,
+        csv_file: str | None = None):
     app = QApplication(sys.argv)
-    window = MainWindow(x_array, y_array, default_function)
+    window = MainWindow(x_array, y_array, default_function, csv_file)
     window.show()
     return app.exec()
 
