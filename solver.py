@@ -14,7 +14,7 @@ class Param:
 
 class Solver:
     def __init__(self):
-        pass
+        self.is_valid_ = False
 
     def update_model(self, function_str: str):
         # TODO checks : nb of params, execution ?
@@ -23,12 +23,21 @@ class Solver:
 
         function_str = "lambda x, " + \
             ", ".join(param_names) + ": " + function_str
-        self.model = eval(function_str)
+        
+        try:
+            model = eval(function_str)
+        except:
+            print("Error in model definition")
+            self.is_valid_ = False
+            return
+        self.model = model
+        self.is_valid_ = True
 
+        #TODO keep existing parameters ?
         self.params = [Param(name, 1.0) for name in param_names]
 
     def is_valid(self) -> bool:
-        pass
+        return self.is_valid_
 
     def get_params(self) -> list[Param]:
         return self.params
