@@ -1,7 +1,7 @@
 
 from PySide6 import QtGui
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, \
-    QWidget, QPushButton, QLineEdit, QGridLayout, QLabel, QCheckBox
+    QWidget, QPushButton, QLineEdit, QGridLayout, QLabel, QCheckBox, QComboBox
 from PySide6.QtCore import Qt as Qt
 from qtrangeslider import QRangeSlider
 
@@ -15,6 +15,7 @@ from .csv_dialog import CSVDialog
 from .data_holder import DataHolder
 from .plot_widget import PlotWidget
 from .solver import Param, Solver
+from .models_library import models_library
 
 import importlib.resources
 
@@ -51,9 +52,11 @@ class MainWindow(QMainWindow):
 
         self.function_text_edit = QLineEdit()
         self.function_text_edit.setPlaceholderText("Enter your function here")
-        self.function_text_edit.setText("a * x**2 + b*x + c")
-        self.solver.update_model("a * x**2 + b*x + c")
         self.function_text_edit.textChanged.connect(self.update_function_text)
+        self.model_combo = QComboBox()
+        self.model_combo.addItems(models_library.keys())
+        self.model_combo.currentTextChanged.connect(
+            lambda text: self.function_text_edit.setText(models_library[text]))
 
         self.fit_button = QPushButton("Fit")
         self.fit_button.clicked.connect(self.fit)
@@ -63,7 +66,6 @@ class MainWindow(QMainWindow):
         self.parameters_grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         parameters_grid = QWidget()
         parameters_grid.setLayout(self.parameters_grid_layout)
-        self.build_parameters_grid()
 
         main_layout = QHBoxLayout()
         right_layout = QVBoxLayout()
@@ -83,6 +85,7 @@ class MainWindow(QMainWindow):
         left_panel.setFixedWidth(300)
 
         left_layout.addWidget(self.function_text_edit)
+        left_layout.addWidget(self.model_combo)
         left_layout.addWidget(parameters_grid)
         left_layout.addWidget(self.fit_button)
 
@@ -95,6 +98,11 @@ class MainWindow(QMainWindow):
         right_panel.dropEvent = self.drop_event
 
         self.setCentralWidget(main_widget)
+
+        self.model_combo.setCurrentIndex(0)
+        self.function_text_edit.setText(models_library["Linear"])
+        self.solver.update_model(models_library["Linear"])
+        self.build_parameters_grid()
 
         # Initialize with data
         if x_array is not None and y_array is not None:
@@ -119,12 +127,11 @@ class MainWindow(QMainWindow):
                 path = Path(url.toLocalFile())
                 if path.suffix == '.csv':
                     self.load_csv(path)
-    
+
     def load_csv(self, path: str | Path):
         csv_dialog = CSVDialog(path, self)
         csv_dialog.data_selected.connect(self.set_data)
         csv_dialog.exec()
-
 
     def set_data(self, x: np.ndarray, y: np.ndarray):
         self.data_holder.set_data(x, y)
@@ -166,7 +173,7 @@ class MainWindow(QMainWindow):
         parameters = self.solver.get_params()
         for i, param in enumerate(parameters):
             self.parameters_grid_layout.addWidget(QLabel(param.name), i+1, 0)
-            value_edit = QLineEdit(f"{param.value:.3g}")
+            value_edit = QLineEdit(f"{param.value:.5g}")
             value_edit.setValidator(QtGui.QDoubleValidator())
             value_edit.textChanged.connect(
                 partial(self.param_value_edited, param)

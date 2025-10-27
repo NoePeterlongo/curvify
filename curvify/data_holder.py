@@ -45,7 +45,7 @@ class DataHolder():
             return
         min_selected_x = self.x[self.selected_mask].min()
         max_selected_x = self.x[self.selected_mask].max()
-        x_array = np.linspace(min_selected_x, max_selected_x, 50)
+        x_array = np.linspace(min_selected_x, max_selected_x, 100)
         self.curve_x = x_array
         self.curve_y = self.solver.evaluate(x_array)
 

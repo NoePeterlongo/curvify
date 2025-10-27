@@ -19,7 +19,8 @@ class Solver:
     def update_model(self, function_str: str):
         # TODO checks : nb of params, execution ?
         # Find params
-        param_names: list[str] = re.findall(r'\b([a-wyz])\b', function_str)
+        param_names: list[str] = re.findall(r'\b([a-wyz]\d*)\b', function_str)
+        param_names = list(dict.fromkeys(param_names)) # Makes the params unique
 
         function_str = "lambda x, " + \
             ", ".join(param_names) + ": " + function_str
