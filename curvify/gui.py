@@ -2,7 +2,7 @@
 from PySide6 import QtGui
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, \
     QWidget, QPushButton, QLineEdit, QGridLayout, QLabel, QCheckBox, QComboBox
-from PySide6.QtCore import Qt as Qt
+from PySide6.QtCore import Qt, QTimer
 from qtrangeslider import QRangeSlider
 
 import sys
@@ -67,24 +67,29 @@ class MainWindow(QMainWindow):
         parameters_grid = QWidget()
         parameters_grid.setLayout(self.parameters_grid_layout)
 
-        main_layout = QHBoxLayout()
+        main_layout = QVBoxLayout()
+        h_layout = QHBoxLayout()
         right_layout = QVBoxLayout()
         left_layout = QVBoxLayout()
 
         main_widget = QWidget()
+        h_widget = QWidget()
         right_panel = QWidget()
         left_panel = QWidget()
 
         main_widget.setLayout(main_layout)
+        h_widget.setLayout(h_layout)
         right_panel.setLayout(right_layout)
         left_panel.setLayout(left_layout)
 
-        main_layout.addWidget(left_panel)
-        main_layout.addWidget(right_panel)
+        main_layout.addWidget(self.function_text_edit)
+        main_layout.addWidget(h_widget)
+
+        h_layout.addWidget(left_panel)
+        h_layout.addWidget(right_panel)
 
         left_panel.setFixedWidth(300)
 
-        left_layout.addWidget(self.function_text_edit)
         left_layout.addWidget(self.model_combo)
         left_layout.addWidget(parameters_grid)
         left_layout.addWidget(self.fit_button)
@@ -154,9 +159,18 @@ class MainWindow(QMainWindow):
         self.plot_widget.update_plot()
 
     def fit(self):
-        self.solver.fit(*self.data_holder.get_selected_data())
-        self.update_plot()
-        self.build_parameters_grid()
+        ok = self.solver.fit(*self.data_holder.get_selected_data())
+        if ok:
+            self.update_plot()
+            self.build_parameters_grid()
+        else:
+            self.fit_button.setText("Fit failed")
+            self.fit_button.setStyleSheet("background-color: red;color: black")
+            # reset text after 2 seconds
+            QTimer.singleShot(1000, lambda: (
+                self.fit_button.setText("Fit"),
+                self.fit_button.setStyleSheet("")
+            ))
 
     def build_parameters_grid(self):
         # Clear layout

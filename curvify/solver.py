@@ -53,14 +53,19 @@ class Solver:
         vectorized_model = np.vectorize(lambda xi: self.model(xi, **params_dict))
         return vectorized_model(x)
 
-    def fit(self, x_data: np.ndarray, y_data: np.ndarray) -> dict:
+    def fit(self, x_data: np.ndarray, y_data: np.ndarray) -> bool:
         # TODO: check the nb of points vs the number of parmaeters
         p0 = [param.value for param in self.params]
         upper_bounds = [p.value+1e-15 if p.locked else p.max_value for p in self.params]
         lower_bounds = [p.value if p.locked else p.min_value for p in self.params]
-        params, covariance = curve_fit(self.model, x_data, y_data, p0=p0, bounds=(lower_bounds, upper_bounds))
+        try:
+            params, covariance = curve_fit(self.model, x_data, y_data, p0=p0, bounds=(lower_bounds, upper_bounds))
+        except RuntimeError as e:
+            print(f"Error during fitting: {e}")
+            return False
         for i, param in enumerate(self.params):
             param.value = float(params[i])
+        return True
 
 
 if __name__ == "__main__":
