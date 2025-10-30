@@ -1,7 +1,8 @@
 
 from PySide6 import QtGui
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, \
-    QWidget, QPushButton, QLineEdit, QGridLayout, QLabel, QCheckBox, QComboBox
+    QWidget, QPushButton, QLineEdit, QGridLayout, QLabel, QCheckBox, QComboBox, \
+    QGroupBox, QLayout, QSizePolicy
 from PySide6.QtCore import Qt, QTimer
 from qtrangeslider import QRangeSlider
 
@@ -68,6 +69,15 @@ class MainWindow(QMainWindow):
         self.parameters_grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         parameters_grid = QWidget()
         parameters_grid.setLayout(self.parameters_grid_layout)
+        parameters_grid.setSizePolicy(
+            QSizePolicy.Policy.Preferred,  # Horizontal policy
+            QSizePolicy.Policy.MinimumExpanding  # Vertical policy
+        )
+
+        self.results_group_layout = QGridLayout()
+        self.results_group_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        results_group_box = QGroupBox("Results")
+        results_group_box.setLayout(self.results_group_layout)
 
         main_layout = QVBoxLayout()
         h_layout = QHBoxLayout()
@@ -94,6 +104,7 @@ class MainWindow(QMainWindow):
 
         left_layout.addWidget(self.model_combo)
         left_layout.addWidget(parameters_grid)
+        left_layout.addWidget(results_group_box)
         left_layout.addWidget(self.fit_button)
 
         right_layout.addWidget(self.plot_widget)
@@ -110,6 +121,7 @@ class MainWindow(QMainWindow):
         self.function_text_edit.setText(models_library["Linear"])
         self.solver.update_model(models_library["Linear"])
         self.build_parameters_grid()
+        self.build_results_box()
 
         # Initialize with data
         if x_array is not None and y_array is not None:
@@ -165,10 +177,11 @@ class MainWindow(QMainWindow):
         self.plot_widget.update_plot()
 
     def fit(self):
-        ok = self.solver.fit(*self.data_holder.get_selected_data())
+        ok, results = self.solver.fit(*self.data_holder.get_selected_data())
         if ok:
             self.update_plot()
             self.build_parameters_grid()
+            self.build_results_box(results)
         else:
             self.fit_button.setText("Fit failed")
             self.fit_button.setStyleSheet("background-color: red;color: black")
@@ -178,13 +191,15 @@ class MainWindow(QMainWindow):
                 self.fit_button.setStyleSheet("")
             ))
 
-    def build_parameters_grid(self):
-        # Clear layout
-        while self.parameters_grid_layout.count():
-            item = self.parameters_grid_layout.takeAt(0)
+    def clear_layout(self, layout: QLayout):
+        while layout.count():
+            item = layout.takeAt(0)
             widget = item.widget()
             if widget is not None:
                 widget.deleteLater()
+
+    def build_parameters_grid(self):
+        self.clear_layout(self.parameters_grid_layout)
 
         self.parameters_grid_layout.addWidget(QLabel("Param"), 0, 0)
         self.parameters_grid_layout.addWidget(QLabel("Value"), 0, 1)
@@ -202,7 +217,8 @@ class MainWindow(QMainWindow):
             )
             self.parameters_grid_layout.addWidget(value_edit, i+1, 1)
 
-            error_label = QLabel(f"{param.error:.1e}" if param.error is not None else "")
+            error_label = QLabel(
+                f"{param.error:.1e}" if param.error is not None else "")
             self.parameters_grid_layout.addWidget(error_label, i+1, 2)
 
             lock_checkbox = QCheckBox()
@@ -222,6 +238,14 @@ class MainWindow(QMainWindow):
 
     def param_locked_changed(self, param: Param, state: int):
         param.locked = state == Qt.Checked.value
+
+    def build_results_box(self, results: dict | None = None):
+        self.clear_layout(self.results_group_layout)
+        if results is not None:
+            self.results_group_layout.addWidget(QLabel("R²"), 0, 0)
+            self.results_group_layout.addWidget(QLabel(f"{results["R2"]:.5g}"), 0, 1)
+            self.results_group_layout.addWidget(QLabel("Root Mean Square Error"), 1, 0)
+            self.results_group_layout.addWidget(QLabel(f"{results["RMSE"]:.5g}"), 1, 1)
 
 
 def curvify(
