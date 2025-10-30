@@ -13,6 +13,7 @@ class Param:
     locked: bool = False
     min_value: float = -float('inf')
     max_value: float = float('inf')
+    error: float | None = None
 
 class Solver:
     def __init__(self):
@@ -55,19 +56,33 @@ class Solver:
         vectorized_model = np.vectorize(lambda xi: self.model(xi, **params_dict))
         return vectorized_model(x)
 
-    def fit(self, x_data: np.ndarray, y_data: np.ndarray) -> bool:
+    def fit(self, x_data: np.ndarray, y_data: np.ndarray) -> tuple[bool, dict]:
         # TODO: check the nb of points vs the number of parmaeters
         p0 = [param.value for param in self.params]
         upper_bounds = [p.value+1e-15 if p.locked else p.max_value for p in self.params]
         lower_bounds = [p.value if p.locked else p.min_value for p in self.params]
         try:
             params, covariance = curve_fit(self.model, x_data, y_data, p0=p0, bounds=(lower_bounds, upper_bounds))
+            error = np.sqrt(np.diag(covariance))
         except RuntimeError as e:
             print(f"Error during fitting: {e}")
-            return False
+            return False, {}
         for i, param in enumerate(self.params):
             param.value = float(params[i])
-        return True
+            param.error = float(error[i])
+
+        results = {}
+        results["params"] = self.get_params_dict()
+        results["params_error"] = error
+        y_pred = self.evaluate(x_data)  
+        ss_res = np.sum((y_data - y_pred) ** 2)
+        ss_tot = np.sum((y_data - np.mean(y_data)) ** 2)
+        r_squared = 1 - (ss_res / ss_tot)
+        results["R2"] = r_squared
+        rmse = np.sqrt(np.mean((y_data - y_pred) ** 2))
+        results["RMSE"] = rmse
+        
+        return True, results
 
 
 if __name__ == "__main__":

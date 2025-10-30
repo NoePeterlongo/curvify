@@ -188,7 +188,8 @@ class MainWindow(QMainWindow):
 
         self.parameters_grid_layout.addWidget(QLabel("Param"), 0, 0)
         self.parameters_grid_layout.addWidget(QLabel("Value"), 0, 1)
-        self.parameters_grid_layout.addWidget(QLabel("Locked"), 0, 2)
+        self.parameters_grid_layout.addWidget(QLabel("Std error"), 0, 2)
+        self.parameters_grid_layout.addWidget(QLabel("Locked"), 0, 3)
 
         parameters = self.solver.get_params()
         for i, param in enumerate(parameters):
@@ -201,12 +202,15 @@ class MainWindow(QMainWindow):
             )
             self.parameters_grid_layout.addWidget(value_edit, i+1, 1)
 
+            error_label = QLabel(f"{param.error:.1e}" if param.error is not None else "")
+            self.parameters_grid_layout.addWidget(error_label, i+1, 2)
+
             lock_checkbox = QCheckBox()
             lock_checkbox.setChecked(param.locked)
             lock_checkbox.stateChanged.connect(
                 partial(self.param_locked_changed, param)
             )
-            self.parameters_grid_layout.addWidget(lock_checkbox, i+1, 2)
+            self.parameters_grid_layout.addWidget(lock_checkbox, i+1, 3)
 
     def param_value_edited(self, param: Param, value: str):
         try:
