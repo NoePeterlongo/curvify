@@ -3,6 +3,8 @@ import numpy as np
 import re
 from dataclasses import dataclass
 
+from .models_library import fourier
+
 
 @dataclass
 class Param:

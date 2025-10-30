@@ -15,7 +15,7 @@ from .csv_dialog import CSVDialog
 from .data_holder import DataHolder
 from .plot_widget import PlotWidget
 from .solver import Param, Solver
-from .models_library import models_library
+from .models_library import models_library, find_model
 
 import importlib.resources
 
@@ -56,7 +56,9 @@ class MainWindow(QMainWindow):
         self.model_combo = QComboBox()
         self.model_combo.addItems(models_library.keys())
         self.model_combo.currentTextChanged.connect(
-            lambda text: self.function_text_edit.setText(models_library[text]))
+            lambda text: self.function_text_edit.setText(
+                models_library[text]) if text != '' else None
+        )
 
         self.fit_button = QPushButton("Fit")
         self.fit_button.clicked.connect(self.fit)
@@ -154,6 +156,10 @@ class MainWindow(QMainWindow):
         self.check_ready_to_fit()
         self.build_parameters_grid()
 
+        # Update combo box selection if the function is known
+        model_index = find_model(text)
+        self.model_combo.setCurrentIndex(model_index)
+
     def update_plot(self):
         self.data_holder.update_curve()  # Data_holder holds the solver
         self.plot_widget.update_plot()
@@ -187,7 +193,8 @@ class MainWindow(QMainWindow):
         parameters = self.solver.get_params()
         for i, param in enumerate(parameters):
             self.parameters_grid_layout.addWidget(QLabel(param.name), i+1, 0)
-            value_edit = QLineEdit(f"{param.value:.5g}")
+            value = param.value if abs(param.value) > 1e-13 else 0.0
+            value_edit = QLineEdit(f"{value:.5g}")
             value_edit.setValidator(QtGui.QDoubleValidator())
             value_edit.textChanged.connect(
                 partial(self.param_value_edited, param)
@@ -222,10 +229,3 @@ def curvify(
     window = MainWindow(x_array, y_array, default_function, csv_file)
     window.show()
     return app.exec()
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
