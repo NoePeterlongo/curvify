@@ -64,7 +64,7 @@ class Solver:
         try:
             params, covariance = curve_fit(self.model, x_data, y_data, p0=p0, bounds=(lower_bounds, upper_bounds))
             error = np.sqrt(np.diag(covariance))
-        except RuntimeError as e:
+        except (RuntimeError, TypeError) as e:
             print(f"Error during fitting: {e}")
             return False, {}
         for i, param in enumerate(self.params):

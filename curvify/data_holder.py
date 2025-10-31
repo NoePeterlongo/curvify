@@ -56,13 +56,18 @@ class DataHolder():
         if len(self.x) == 0:
             return np.array([]), np.array([])
         return self.x[~self.selected_mask].copy(), self.y[~self.selected_mask].copy()
-    
+
     def get_curve_data(self) -> tuple[np.ndarray, np.ndarray]:
         return self.curve_x.copy(), self.curve_y.copy()
 
+    def get_residuals(self) -> tuple[np.ndarray, np.ndarray]:
+        if len(self.x) == 0:
+            return np.array([]), np.array([])
+        return self.x[self.selected_mask].copy(), self.y[self.selected_mask] - self.solver.evaluate(self.x[self.selected_mask])
+
     def __len__(self):
         return len(self.x)
-    
+
     def x_range(self) -> tuple[float, float]:
         if len(self.x) == 0:
             return (0, 0)
