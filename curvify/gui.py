@@ -243,9 +243,17 @@ class MainWindow(QMainWindow):
         self.clear_layout(self.results_group_layout)
         if results is not None:
             self.results_group_layout.addWidget(QLabel("R²"), 0, 0)
-            self.results_group_layout.addWidget(QLabel(f"{results["R2"]:.5g}"), 0, 1)
+            r2_label = QLabel(f"{results["R2"]:.5g}")
+            r2_label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse
+            )
+            self.results_group_layout.addWidget(r2_label, 0, 1)
             self.results_group_layout.addWidget(QLabel("Root Mean Square Error"), 1, 0)
-            self.results_group_layout.addWidget(QLabel(f"{results["RMSE"]:.5g}"), 1, 1)
+            rmse_label = QLabel(f"{results["RMSE"]:.5g}")
+            rmse_label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse
+            )
+            self.results_group_layout.addWidget(rmse_label, 1, 1)
 
 
 def curvify(
