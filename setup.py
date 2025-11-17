@@ -8,6 +8,7 @@ setup(
         "curvify": ["icons/*.png"],
     },
     install_requires=[
+        "setuptools",
         "numpy",
         "scipy",
         "matplotlib",
