@@ -1,9 +1,9 @@
 
-from PySide6 import QtGui
+from PySide6.QtGui import QAction, QDoubleValidator, QIcon, QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, \
     QWidget, QPushButton, QLineEdit, QGridLayout, QLabel, QCheckBox, QComboBox, \
-    QGroupBox, QLayout, QSizePolicy
-from PySide6.QtCore import Qt, QTimer
+    QGroupBox, QLayout, QSizePolicy, QToolBar, QFileDialog
+from PySide6.QtCore import Qt, QTimer, QSize
 from qtrangeslider import QRangeSlider
 
 import sys
@@ -12,18 +12,20 @@ from pathlib import Path
 from functools import partial
 import numpy as np
 
+
 from .csv_dialog import CSVDialog
 from .data_holder import DataHolder
 from .plot_widget import PlotWidget
 from .solver import Param, Solver
 from .models_library import models_library, find_model
+from .text_dialog import TextDialog
 
 import importlib.resources
 
 
 def get_icon():
     with importlib.resources.path("curvify.icons", "app_icon.png") as icon_path:
-        return QtGui.QIcon(str(icon_path))
+        return QIcon(str(icon_path))
 
 
 class MainWindow(QMainWindow):
@@ -79,6 +81,20 @@ class MainWindow(QMainWindow):
         results_group_box = QGroupBox("Results")
         results_group_box.setLayout(self.results_group_layout)
 
+        # Toolbar
+        toolbar = QToolBar("Main toolbar", movable=False)
+        toolbar.setIconSize(QSize(16, 16))
+        open_action = QAction("Open file", self)
+        open_action.setStatusTip("Open CSV file")
+        open_action.triggered.connect(self.select_csv)
+        toolbar.addAction(open_action)
+        report_action = QAction("Report", self)
+        report_action.setStatusTip("Display last report")
+        report_action.triggered.connect(self.display_report)
+        toolbar.addAction(report_action)
+
+        self.addToolBar(toolbar)
+
         main_layout = QVBoxLayout()
         h_layout = QHBoxLayout()
         right_layout = QVBoxLayout()
@@ -131,7 +147,7 @@ class MainWindow(QMainWindow):
         if csv_file is not None:
             self.load_csv(csv_file)
 
-    def drag_enter_event(self, event: QtGui.QDragEnterEvent):
+    def drag_enter_event(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
             n_files = len(event.mimeData().urls())
             if n_files == 1:
@@ -139,18 +155,25 @@ class MainWindow(QMainWindow):
                 return
         event.ignore()
 
-    def drop_event(self, event: QtGui.QDropEvent):
+    def drop_event(self, event: QDropEvent):
         mime = event.mimeData()
         if mime.hasUrls():
             for url in mime.urls():
                 path = Path(url.toLocalFile())
                 if path.suffix == '.csv':
                     self.load_csv(path)
+                    return
+
+    def select_csv(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Select CSV File", "", "CSV Files (*.csv)")
+        if path:
+            self.load_csv(path)
 
     def load_csv(self, path: str | Path):
         csv_dialog = CSVDialog(path, self)
         csv_dialog.data_selected.connect(self.set_data)
         csv_dialog.exec()
+
 
     def set_data(self, x: np.ndarray, y: np.ndarray):
         self.data_holder.set_data(x, y)
@@ -211,7 +234,7 @@ class MainWindow(QMainWindow):
             self.parameters_grid_layout.addWidget(QLabel(param.name), i+1, 0)
             value = param.value if abs(param.value) > 1e-13 else 0.0
             value_edit = QLineEdit(f"{value:.5g}")
-            value_edit.setValidator(QtGui.QDoubleValidator())
+            value_edit.setValidator(QDoubleValidator())
             value_edit.textChanged.connect(
                 partial(self.param_value_edited, param)
             )
@@ -254,6 +277,10 @@ class MainWindow(QMainWindow):
                 Qt.TextInteractionFlag.TextSelectableByMouse
             )
             self.results_group_layout.addWidget(rmse_label, 1, 1)
+
+    def display_report(self):
+        report_dialog = TextDialog(self, "Last fitting report", self.solver.report)
+        report_dialog.exec()
 
 
 def curvify(
